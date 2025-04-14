@@ -202,8 +202,10 @@ export const stopTestRecording = async (req, res) => {
         (error, stdout, stderr) => {
           if (error) {
             console.error(`Git push error: ${error.message}`);
+            console.error(`Git push stderr: ${stderr}`); // Log standard error output
             return reject(error);
           }
+          console.log(`Git push stdout: ${stdout}`); // Log standard output
           resolve(stdout);
         }
       );
