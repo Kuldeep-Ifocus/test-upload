@@ -198,7 +198,7 @@ export const stopTestRecording = async (req, res) => {
     // Pull from main and push to main branch
     await new Promise((resolve, reject) => {
       exec(
-        `cd "${repoPath}" && git pull origin main && git push origin main`,
+        `git pull origin main && git push origin main`,
         (error, stdout, stderr) => {
           if (error) {
             console.error(`Git push error: ${error.message}`);
