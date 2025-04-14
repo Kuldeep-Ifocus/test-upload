@@ -200,62 +200,72 @@ export const stopTestRecording = async (req, res) => {
       // Check if remote exists
       const remoteExists = await new Promise((resolve) => {
         exec(`cd "${repoPath}" && git remote -v`, (error, stdout) => {
-          resolve(!error && stdout.includes('origin'));
+          resolve(!error && stdout.includes("origin"));
         });
       });
 
       if (!remoteExists) {
         // Replace with your actual repository URL
-        const remoteUrl = "https://github.com/yourusername/test-scripts-repo.git";
+        const remoteUrl =
+          "https://github.com/Kuldeep-Ifocus/test-upload/tree/main";
         await new Promise((resolve, reject) => {
-          exec(`cd "${repoPath}" && git remote add origin ${remoteUrl}`, (error) => {
-            if (error) {
-              console.warn(`Could not add remote: ${error.message}`);
+          exec(
+            `cd "${repoPath}" && git remote add origin ${remoteUrl}`,
+            (error) => {
+              if (error) {
+                console.warn(`Could not add remote: ${error.message}`);
+              }
+              resolve();
             }
-            resolve();
-          });
+          );
         });
       }
 
       // First pull from remote to avoid conflicts
       await new Promise((resolve) => {
-        exec(`cd "${repoPath}" && git pull origin master || git pull origin main || echo "Pull failed, continuing anyway"`, (error) => {
-          if (error) {
-            console.warn(`Git pull warning: ${error.message}`);
+        exec(
+          `cd "${repoPath}" && git pull origin master || git pull origin main || echo "Pull failed, continuing anyway"`,
+          (error) => {
+            if (error) {
+              console.warn(`Git pull warning: ${error.message}`);
+            }
+            resolve();
           }
-          resolve();
-        });
+        );
       });
 
       // Try to push to remote with force option if needed
       await new Promise((resolve) => {
-        exec(`cd "${repoPath}" && git push -u origin master || git push -u origin main || git push --force origin master || git push --force origin main`, (error) => {
-          if (error) {
-            console.warn(`Git push warning: ${error.message}`);
+        exec(
+          `cd "${repoPath}" && git push -u origin master || git push -u origin main || git push --force origin master || git push --force origin main`,
+          (error) => {
+            if (error) {
+              console.warn(`Git push warning: ${error.message}`);
+            }
+            resolve();
           }
-          resolve();
-        });
+        );
       });
 
       // Clean up the original recording file
       fs.unlinkSync(outputPath);
 
-      res.json({ 
+      res.json({
         message: "Recording script saved and pushed to Git repository",
         scriptId: scriptId,
-        location: scriptFilePath
+        location: scriptFilePath,
       });
     } catch (gitError) {
       console.warn("Git operations failed:", gitError.message);
-      
+
       // Clean up the original recording file anyway
       fs.unlinkSync(outputPath);
-      
-      res.json({ 
+
+      res.json({
         message: "Recording script saved to Git repository locally",
         note: "Script was committed locally but push failed. Please check Git configuration.",
         scriptId: scriptId,
-        location: scriptFilePath
+        location: scriptFilePath,
       });
     }
   } catch (err) {
