@@ -177,9 +177,9 @@ export const stopTestRecording = async (req, res) => {
     // Add and commit to Git
     await new Promise((resolve, reject) => {
       exec(
-        `cd "${repoPath}" && git add "${scriptFilePath}" && git commit -m "Add test script for ${
-          url || "unknown URL"
-        } (ID: ${scriptId})"`,
+        `cd "${repoPath}" && git add "${scriptFilePath}" && git commit -m "Add test script for
+          // url || "unknown URL"
+        (ID: ${scriptId})"`,
         (error, stdout, stderr) => {
           if (error) {
             // If nothing to commit, don't treat as error
@@ -233,7 +233,7 @@ export const stopTestRecording = async (req, res) => {
       location: scriptFilePath,
     });
   }
-}
+};
 
 export const getAllTestScripts = async (req, res) => {
   const scripts = await TestScript.find();
