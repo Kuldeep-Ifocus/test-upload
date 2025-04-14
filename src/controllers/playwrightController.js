@@ -217,9 +217,19 @@ export const stopTestRecording = async (req, res) => {
         });
       }
 
-      // Try to push to remote
+      // First pull from remote to avoid conflicts
       await new Promise((resolve) => {
-        exec(`cd "${repoPath}" && git push -u origin master || git push -u origin main`, (error) => {
+        exec(`cd "${repoPath}" && git pull origin master || git pull origin main || echo "Pull failed, continuing anyway"`, (error) => {
+          if (error) {
+            console.warn(`Git pull warning: ${error.message}`);
+          }
+          resolve();
+        });
+      });
+
+      // Try to push to remote with force option if needed
+      await new Promise((resolve) => {
+        exec(`cd "${repoPath}" && git push -u origin master || git push -u origin main || git push --force origin master || git push --force origin main`, (error) => {
           if (error) {
             console.warn(`Git push warning: ${error.message}`);
           }
