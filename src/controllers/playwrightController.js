@@ -252,10 +252,13 @@ export const stopTestRecording = async (req, res) => {
       // Skip the push step and just inform the user about the local commit
       res.json({
         message: "Recording script saved to Git repository locally",
-        note: "Script was committed locally. To push to GitHub, please run these commands manually:\n\ncd " + repoPath + "\ngit push -u origin main",
+        note:
+          "Script was committed locally. To push to GitHub, please run these commands manually:\n\ncd " +
+          repoPath +
+          "\ngit push -u origin main",
         scriptId: scriptId,
         location: scriptFilePath,
-        repoPath: repoPath
+        repoPath: repoPath,
       });
     } catch (gitError) {
       console.warn("Git operations failed:", gitError.message);
