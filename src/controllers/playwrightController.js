@@ -206,8 +206,7 @@ export const stopTestRecording = async (req, res) => {
 
       if (!remoteExists) {
         // Replace with your actual repository URL
-        const remoteUrl =
-          "https://github.com/Kuldeep-Ifocus/test-upload/tree/main";
+        const remoteUrl = "https://github.com/Kuldeep-Ifocus/test-upload.git";
         await new Promise((resolve, reject) => {
           exec(
             `cd "${repoPath}" && git remote add origin ${remoteUrl}`,
