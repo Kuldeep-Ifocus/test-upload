@@ -195,89 +195,43 @@ export const stopTestRecording = async (req, res) => {
       );
     });
 
-    // Configure remote repository if not already set up
-    try {
-      // Check if remote exists
-      const remoteExists = await new Promise((resolve) => {
-        exec(`cd "${repoPath}" && git remote -v`, (error, stdout) => {
-          resolve(!error && stdout.includes("origin"));
-        });
-      });
-
-      if (!remoteExists) {
-        // Use HTTPS URL instead of SSH
-        const remoteUrl = "https://github.com/Kuldeep-Ifocus/test-upload.git";
-        await new Promise((resolve, reject) => {
-          exec(
-            `cd "${repoPath}" && git remote add origin ${remoteUrl}`,
-            (error) => {
-              if (error) {
-                console.warn(`Could not add remote: ${error.message}`);
-              }
-              resolve();
-            }
-          );
-        });
-      } else {
-        // Update existing remote to use HTTPS instead of SSH
-        await new Promise((resolve) => {
-          exec(
-            `cd "${repoPath}" && git remote set-url origin https://github.com/Kuldeep-Ifocus/test-upload.git`,
-            (error) => {
-              if (error) {
-                console.warn(`Could not update remote URL: ${error.message}`);
-              }
-              resolve();
-            }
-          );
-        });
-      }
-
-      // Configure Git user if not already set
-      await new Promise((resolve) => {
-        exec(
-          `cd "${repoPath}" && git config user.name "Automated Script" && git config user.email "automated@example.com"`,
-          (error) => {
-            if (error) {
-              console.warn(`Git config warning: ${error.message}`);
-            }
-            resolve();
+    // Pull from main and push to main branch
+    await new Promise((resolve, reject) => {
+      exec(
+        `cd "${repoPath}" && git pull origin main && git push origin main`,
+        (error, stdout, stderr) => {
+          if (error) {
+            console.error(`Git push error: ${error.message}`);
+            return reject(error);
           }
-        );
-      });
+          resolve(stdout);
+        }
+      );
+    });
 
-      // Clean up the original recording file
-      fs.unlinkSync(outputPath);
+    // Clean up the original recording file
+    fs.unlinkSync(outputPath);
 
-      // Skip the push step and just inform the user about the local commit
-      res.json({
-        message: "Recording script saved to Git repository locally",
-        note:
-          "Script was committed locally. To push to GitHub, please run these commands manually:\n\ncd " +
-          repoPath +
-          "\ngit push -u origin main",
-        scriptId: scriptId,
-        location: scriptFilePath,
-        repoPath: repoPath,
-      });
-    } catch (gitError) {
-      console.warn("Git operations failed:", gitError.message);
+    res.json({
+      message: "Recording script saved and pushed to Git repository",
+      scriptId: scriptId,
+      location: scriptFilePath,
+      repoPath: repoPath,
+    });
+  } catch (gitError) {
+    console.warn("Git operations failed:", gitError.message);
 
-      // Clean up the original recording file anyway
-      fs.unlinkSync(outputPath);
+    // Clean up the original recording file anyway
+    fs.unlinkSync(outputPath);
 
-      res.json({
-        message: "Recording script saved to Git repository locally",
-        note: "Script was committed locally but push failed. Please check Git configuration.",
-        scriptId: scriptId,
-        location: scriptFilePath,
-      });
-    }
-  } catch (err) {
-    console.error("Error saving script to Git:", err);
-    res.status(500).json({ error: "Failed to save script to Git repository" });
+    res.json({
+      message: "Recording script saved to Git repository locally",
+      note: "Script was committed locally but push failed. Please check Git configuration.",
+      scriptId: scriptId,
+      location: scriptFilePath,
+    });
   }
-};
+}
 
 export const getAllTestScripts = async (req, res) => {
   const scripts = await TestScript.find();
