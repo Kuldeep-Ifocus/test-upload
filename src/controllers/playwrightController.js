@@ -195,16 +195,59 @@ export const stopTestRecording = async (req, res) => {
       );
     });
 
-    // Skip the push step for now since we don't have a remote configured
-    // We'll just save locally
+    // Configure remote repository if not already set up
+    try {
+      // Check if remote exists
+      const remoteExists = await new Promise((resolve) => {
+        exec(`cd "${repoPath}" && git remote -v`, (error, stdout) => {
+          resolve(!error && stdout.includes('origin'));
+        });
+      });
 
-    // Clean up the original recording file
-    fs.unlinkSync(outputPath);
+      if (!remoteExists) {
+        // Replace with your actual repository URL
+        const remoteUrl = "https://github.com/yourusername/test-scripts-repo.git";
+        await new Promise((resolve, reject) => {
+          exec(`cd "${repoPath}" && git remote add origin ${remoteUrl}`, (error) => {
+            if (error) {
+              console.warn(`Could not add remote: ${error.message}`);
+            }
+            resolve();
+          });
+        });
+      }
 
-    res.json({ 
-      message: "Recording script saved to Git repository locally",
-      note: "Script was committed to local repository only. To push to a remote repository, please configure Git with a remote URL."
-    });
+      // Try to push to remote
+      await new Promise((resolve) => {
+        exec(`cd "${repoPath}" && git push -u origin master || git push -u origin main`, (error) => {
+          if (error) {
+            console.warn(`Git push warning: ${error.message}`);
+          }
+          resolve();
+        });
+      });
+
+      // Clean up the original recording file
+      fs.unlinkSync(outputPath);
+
+      res.json({ 
+        message: "Recording script saved and pushed to Git repository",
+        scriptId: scriptId,
+        location: scriptFilePath
+      });
+    } catch (gitError) {
+      console.warn("Git operations failed:", gitError.message);
+      
+      // Clean up the original recording file anyway
+      fs.unlinkSync(outputPath);
+      
+      res.json({ 
+        message: "Recording script saved to Git repository locally",
+        note: "Script was committed locally but push failed. Please check Git configuration.",
+        scriptId: scriptId,
+        location: scriptFilePath
+      });
+    }
   } catch (err) {
     console.error("Error saving script to Git:", err);
     res.status(500).json({ error: "Failed to save script to Git repository" });
