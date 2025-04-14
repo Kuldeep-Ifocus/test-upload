@@ -195,17 +195,21 @@ export const stopTestRecording = async (req, res) => {
       );
     });
 
-    // Pull from main and push to main branch
+    // Modify the Git push operation in stopTestRecording
     await new Promise((resolve, reject) => {
-      exec(`git push origin main`, (error, stdout, stderr) => {
-        if (error) {
-          console.error(`Git push error: ${error.message}`);
-          console.error(`Git push stderr: ${stderr}`); // Log standard error output
-          return reject(error);
+      exec(
+        `cd "${repoPath}" && git push -u origin main`,
+        { env: { ...process.env, GIT_TERMINAL_PROMPT: "0" } },
+        (error, stdout, stderr) => {
+          if (error) {
+            console.error(`Git push error: ${error.message}`);
+            console.error(`Git push stderr: ${stderr}`);
+            return reject(error);
+          }
+          console.log(`Git push stdout: ${stdout}`);
+          resolve(stdout);
         }
-        console.log(`Git push stdout: ${stdout}`); // Log standard output
-        resolve(stdout);
-      });
+      );
     });
 
     // Clean up the original recording file
